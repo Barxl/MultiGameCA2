@@ -6,12 +6,41 @@
     <title>Document</title>
 </head>
 <body>
+    <h1>Monster Game</h1>
+    <button id = 'btnCreate'>New Game</button>
+    <button id = 'btnJoin'>Join Game</button>
+    <input type = 'text' id = 'txtGameId'>
     <script>
+        let clientId = null;
         let ws = new WebSocket("ws://localhost:9090")
+        const btnCreate = document.getElementById("btnCreate");
+        const btnJoin = document.getElementById("btnJoin");
+        const txtGame = document.getElementById("txtGameId");
+
+        //events
+        btnCreate.addEventListener("click", e => {
+            
+            const payLoad = {
+                "method": "create",
+                "clientId": clientId
+            }
+
+            ws.send(JSON.stringify(payLoad))
+        }) 
+        
         ws.onmessage = message => {
             const response = JSON.parse(message.data);
-            console.log(response);
-            
+            //connect
+            if (response.method === "connect"){
+                clientId = response.clientId;
+                console.log("Client ID set successfully " + clientId)
+            }
+
+            //create
+            if (response.method === "create"){
+                clientId = response.clientId;
+                console.log("Game ID set successfully " + response.game.id + response.game.id + " with " + response.game.cells + " cells ")
+            }
         }
     </script>
 </body>

@@ -10,6 +10,8 @@
     <button id = 'btnCreate'>New Game</button>
     <button id = 'btnJoin'>Join Game</button>
     <input type = 'text' id = 'txtGameId'>
+    <div id = 'divPlayers'></div>
+
     <script>
         let gameId = null;
         let clientId = null;
@@ -17,6 +19,7 @@
         const btnCreate = document.getElementById("btnCreate");
         const btnJoin = document.getElementById("btnJoin");
         const txtGame = document.getElementById("txtGameId");
+        const divPlayers = document.getElementById("divPlayers");
 
         //events
 
@@ -57,6 +60,23 @@
             if (response.method === "create"){
                 gameId = response.game.id;
                 console.log("Game ID set successfully " + response.game.id + response.game.id + " with " + response.game.cells + " cells ")
+            }
+
+            //join
+            if (response.method === "join"){
+                const game = response.game;
+
+                while(divPlayers.firstChild)
+                    divPlayers.removeChild (divPlayers.firstChild)
+
+                game.clients.forEach(c => {
+
+                    const d = document.createElement("div");
+                    d.style.width = "200px";
+                    d.style.background = c.colour
+                    d.textContent = c.clientId;
+                    divPlayers.appendChild(d);
+                });
             }
         }
     </script>

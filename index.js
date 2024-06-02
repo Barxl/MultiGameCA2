@@ -47,6 +47,7 @@ wsServer.on("request", request => {
             con.send(JSON.stringify(payLoad));
         }
 
+        //this is for the user be able to join a game
         if (result.method === "join") {
 
             const clientId = result.clientId;

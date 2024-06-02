@@ -11,6 +11,7 @@
     <button id = 'btnJoin'>Join Game</button>
     <input type = 'text' id = 'txtGameId'>
     <script>
+        let gameId = null;
         let clientId = null;
         let ws = new WebSocket("ws://localhost:9090")
         const btnCreate = document.getElementById("btnCreate");
@@ -18,6 +19,22 @@
         const txtGame = document.getElementById("txtGameId");
 
         //events
+
+                //join event
+        btnJoin.addEventListener("click", e => {
+
+            if (gameId === null)
+            gameId = txtGameId,value;
+
+            const payLoad = {
+                "method": "join",
+                "clientId": clientId,
+                "gameId": gameId
+            }
+            ws.send(JSON.stringify(payLoad))
+        })
+
+                //create event
         btnCreate.addEventListener("click", e => {
             
             const payLoad = {
@@ -38,7 +55,7 @@
 
             //create
             if (response.method === "create"){
-                clientId = response.clientId;
+                gameId = response.game.id;
                 console.log("Game ID set successfully " + response.game.id + response.game.id + " with " + response.game.cells + " cells ")
             }
         }

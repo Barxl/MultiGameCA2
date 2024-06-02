@@ -1,5 +1,6 @@
 
 //Creating server
+const { response } = require("express");
 const http = require("http");
 const app = require("express")();
 app.get("/", (req, res)=> res.sendFile(__dirname + "/index.html"))
@@ -33,7 +34,8 @@ wsServer.on("request", request => {
             const gameId = guid();
             games[gameId] = {
                 "id": gameId,
-                "cells": 10
+                "cells": 10,
+                "clients": []
             }
 
             const payLoad = {
@@ -43,6 +45,33 @@ wsServer.on("request", request => {
 
             const con = clients[clientId].connection;
             con.send(JSON.stringify(payLoad));
+        }
+
+        if (result.method === "join") {
+
+            const clientId = result.clientId;
+            const gameId = result.gameId;
+            const game = games[gameId];
+
+            if (game.clients.length >= 4){
+                return;
+            }
+
+            //assigning colour for each player
+            const colour = {"0": "Red", "1": "Green", "2": "Blue", "3": "Purple"} [game.clients.length]
+            game.clients.push({
+                "clientId": clientId,
+                "colour": colour
+            })
+
+            const payLoad = {
+                "method": "join",
+                "game": game
+            }
+            //this loop shows to the players that a new player has joined the game
+            game.clients.forEach(c=> {
+                 clients[c.clientId].connection.send(JSON.stringify(payLoad))
+            })
         }
         
     })

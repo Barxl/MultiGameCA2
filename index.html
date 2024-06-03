@@ -11,15 +11,18 @@
     <button id = 'btnJoin'>Join Game</button>
     <input type = 'text' id = 'txtGameId'>
     <div id = 'divPlayers'></div>
+    <div id = 'divBoard'></div>
 
     <script>
         let gameId = null;
         let clientId = null;
+        let playerColour = null;
         let ws = new WebSocket("ws://localhost:9090")
         const btnCreate = document.getElementById("btnCreate");
         const btnJoin = document.getElementById("btnJoin");
         const txtGame = document.getElementById("txtGameId");
         const divPlayers = document.getElementById("divPlayers");
+        const divBoard = document.getElementById("divBoard");
 
         //events
 
@@ -76,7 +79,25 @@
                     d.style.background = c.colour
                     d.textContent = c.clientId;
                     divPlayers.appendChild(d);
+
+                    if (c.clientId === clientId) playerColour = c.colour;
                 });
+
+                while(divBoard.firstChild)
+                divBoard.removeChild (divBoard.firstChild)
+                
+                for (let i = 0; i< game.cells; i++){
+                    const b = document.createElement("button");
+                    b.id = "cells" + i;
+                    b.tag = i+1;
+                    b.textContent = i+1;
+                    b.style.width = "150px"
+                    b.style.height = "150px"
+                    b.addEventListener("click", e => {
+                        b.style.background = playerColour
+                    })
+                    divBoard.appendChild(b);
+                }
             }
         }
     </script>

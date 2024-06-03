@@ -30,7 +30,7 @@ wsServer.on("request", request => {
 
         //creating a new game
         if (result.method === "create") {
-            const clientId = result.clientId
+            const clientId = result.clientId;
             const gameId = guid();
             games[gameId] = {
                 "id": gameId,

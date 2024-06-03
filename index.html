@@ -27,7 +27,7 @@
         btnJoin.addEventListener("click", e => {
 
             if (gameId === null)
-            gameId = txtGameId,value;
+            gameId = txtGameId.value;
 
             const payLoad = {
                 "method": "join",
@@ -59,7 +59,7 @@
             //create
             if (response.method === "create"){
                 gameId = response.game.id;
-                console.log("Game ID set successfully " + response.game.id + response.game.id + " with " + response.game.cells + " cells ")
+                console.log("Game ID set successfully " + response.game.id + " with " + response.game.cells + " cells ")
             }
 
             //join

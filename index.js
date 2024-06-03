@@ -65,6 +65,9 @@ wsServer.on("request", request => {
                 "colour": colour
             })
 
+            //start teh game
+            if (game.clients.length === 4) updateGameState();
+
             const payLoad = {
                 "method": "join",
                 "game": game
@@ -75,6 +78,21 @@ wsServer.on("request", request => {
             })
         }
         
+        if (result.method === "play"){
+            const clientId = result.clientId;
+            const gameId = result.gameId;
+            const cellsId = result.cellsId; 
+            const colour = result.colour;
+            let state = games[gameId].state;
+
+            if (!state)
+                state = {}
+
+            state[cellsId] = colour;
+
+            games[gameId].state = state;
+
+        }
     })
 
     //generate a new clientId
@@ -92,6 +110,28 @@ wsServer.on("request", request => {
     connection.send(JSON.stringify(payLoad))
     
 })
+
+function updateGameState(){
+
+for (const g of Object.keys(games)){
+
+    const game = games[g]
+
+    const payLoad = {
+        
+    "method": "update",
+    "game": game
+    }
+
+    game.clients.forEach(c=>{
+        clients[c.clientId].connection.send(JSON.stringify(payLoad))
+    })
+}
+
+setTimeout(updateGameState, 500);
+
+}
+
 
 //Function to create a user ID
 function S4() {

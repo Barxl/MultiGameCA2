@@ -5,7 +5,7 @@ const http = require("http");
 const app = require("express")();
 app.get("/", (req, res)=> res.sendFile(__dirname + "/index.html"))
 app.listen(9091, ()=>console.log("Listening on http port 9091"))
-const websocketServer = require("websocket").server;
+const websocketServer = require("websocket").server; // Import the WebSocket server module
 const httpServer = http.createServer();
 httpServer.listen(9090, () => console.log("Listening.. on 9090"))
 
@@ -18,25 +18,45 @@ const games = {};
 //I am going to use websocket server for the multiplayer aspect of the game
 const wsServer = new websocketServer({
     "httpServer": httpServer
-})
+});
+
+// List of monsters and their initial positions
+const initialMonsters = [
+    { type: "vampire", position: 1 },
+    { type: "werewolf", position: 10 },
+    { type: "ghost", position: 91 },
+    { type: "vampire", position: 100 }
+];
+
+// List of all possible monster types
+const allMonsters = ["vampire", "werewolf", "ghost"];
 
 //function to connect
 wsServer.on("request", request => {
     const connection = request.accept(null, request.origin);
+    const clientId = guid(); // Generate a unique client ID
+    clients[clientId] = { "connection": connection }; // Store the connection in the clients HashMap
+
+    // Handle connection close event
     connection.on("close", () => console.log("closed!"))
+    // Handle connection open event
     connection.on("open", () => console.log("opened!"))
+    // Handle incoming messages
     connection.on("message", message => {
         const result = JSON.parse(message.utf8Data)
 
         //creating a new game
         if (result.method === "create") {
             const clientId = result.clientId;
-            const gameId = guid();
+            const gameId = guid();// This generate a unique game ID
             games[gameId] = {
                 "id": gameId,
-                "cells": 10,
-                "clients": []
-            }
+                "cells": 100, // 10x10 grid
+                "clients": [],
+                "currentTurn": 0,
+                "state": {},
+                "assignedMonsters": []
+            };
 
             const payLoad = {
                 "method": "create",

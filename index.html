@@ -3,30 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Monster Game</title>
+    <style>
+        /* Styling for the game board */
+        #divBoard {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 5px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        #divBoard button {
+            width: 100%;
+            padding-top: 100%;  /* This makes the buttons square */
+            position: relative;
+            background-color: #f0f0f0;  /* Default background color */
+            border: 1px solid #ccc;  /* Border to distinguish the buttons */
+            cursor: pointer;  /* Pointer cursor for interactive feel */
+        }
+
+        #divBoard button span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;  /* Make the text bigger */
+            font-weight: bold;  /* Make the text bolder */
+        }
+    </style>
 </head>
 <body>
     <h1>Monster Game</h1>
+
+     <!-- Buttons for creating and joining a game -->
     <button id = 'btnCreate'>New Game</button>
     <button id = 'btnJoin'>Join Game</button>
-    <input type = 'text' id = 'txtGameId'>
+    <input type='text' id='txtGameId'>
     <div id = 'divPlayers'></div>
     <div id = 'divBoard'></div>
+    <div id='divTurn'>Waiting for game to start...</div>
 
     <script>
-        let gameId = null;
-        let clientId = null;
-        let playerColour = null;
+        let gameId = null; // Current game ID
+        let clientId = null; // Client ID for the player
+        let playerColour = null; // Player's colour
+        let playerMonsters = []; // List of player's monsters
         let ws = new WebSocket("ws://localhost:9090")
+
         const btnCreate = document.getElementById("btnCreate");
         const btnJoin = document.getElementById("btnJoin");
-        const txtGame = document.getElementById("txtGameId");
+        const txtGameId = document.getElementById("txtGameId");
         const divPlayers = document.getElementById("divPlayers");
         const divBoard = document.getElementById("divBoard");
+        const divTurn = document.getElementById("divTurn");
 
         //events
 
-                //join event
+                // Event listener for joining a game
         btnJoin.addEventListener("click", e => {
 
             if (gameId === null)
@@ -40,7 +78,7 @@
             ws.send(JSON.stringify(payLoad))
         })
 
-                //create event
+                 // Event listener for creating a new game
         btnCreate.addEventListener("click", e => {
             
             const payLoad = {
@@ -53,74 +91,132 @@
         
         ws.onmessage = message => {
             const response = JSON.parse(message.data);
-            //connect
+
+            // Handle the connection message
             if (response.method === "connect"){
                 clientId = response.clientId;
                 console.log("Client ID set successfully " + clientId)
             }
 
-            //create
+            //game creation message
             if (response.method === "create"){
                 gameId = response.game.id;
                 console.log("Game ID set successfully " + response.game.id + " with " + response.game.cells + " cells ")
             }
 
-            //update
+            //game state updates
 
             if (response.method === "update"){
 
                 if (!response.game.state) return;
 
+                // Clear previous states
+                const buttons = divBoard.getElementsByTagName("button");
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].style.backgroundColor = '#f0f0f0';
+                    buttons[i].querySelector("span").textContent = "";
+                }
+
+                // This will update the board with the current game state
                 for (const b of Object.keys(response.game.state)){
 
-                    const colour = response.game.state[b];
+                    const cellData = response.game.state[b];
                     const cellObject = document.getElementById ("cell" + b);
-                    cellObject.style.backgroundColor = colour
+                    if (cellObject){
+                        cellObject.style.backgroundColor = cellData.color;
+                        cellObject.querySelector("span").textContent = cellData.monster;
+                    }
+                }
+
+                                            //AI GENERATED
+                //update the turn dysplay
+                const currentPlayerId = response.game.clients[response.game.currentTurn].clientId;
+                
+                if (currentPlayerId === clientId) {
+                    divTurn.textContent = "It's your turn!";
+                    enableBoard(true);
+                } else {
+                    divTurn.textContent = "It's " + currentPlayerId + "'s turn.";
+                    enableBoard(false);
                 }
             }
 
 
-            //join
+            //join game message
             if (response.method === "join"){
                 const game = response.game;
 
+                //this will clear the previous player list
                 while(divPlayers.firstChild)
                     divPlayers.removeChild (divPlayers.firstChild)
 
+
+                // Update the player list    
                 game.clients.forEach(c => {
 
                     const d = document.createElement("div");
                     d.style.width = "200px";
-                    d.style.background = c.colour
+                    d.style.background = c.color
+                    d.textContent = `${c.clientId} (${c.monsters.map(m => m.type).join(', ')})`;
                     d.textContent = c.clientId;
                     divPlayers.appendChild(d);
 
-                    if (c.clientId === clientId) playerColour = c.colour;
+                    if (c.clientId === clientId) {
+                    playerColour = c.color;
+                    playerMonsters = c.monsters;
+                    
+                    }
+                    
                 });
 
+                //this will clear the previous board
                 while(divBoard.firstChild)
                 divBoard.removeChild (divBoard.firstChild)
                 
-                for (let i = 0; i< game.cells; i++){
+
+                                //AI GENERATED
+
+                //for loop to create the board
+                for (let i = 0; i < game.cells; i++) {
                     const b = document.createElement("button");
-                    b.id = "cell" + (i+1);
-                    b.tag = i+1;
-                    b.textContent = i+1;
-                    b.style.width = "150px"
-                    b.style.height = "150px"
+                    b.id = "cell" + (i + 1);
+                    b.tag = i + 1;
+                    const span = document.createElement("span");
+                    span.textContent = "";  // Remove numbers from buttons
+                    b.appendChild(span);
                     b.addEventListener("click", e => {
-                        b.style.background = playerColour
-                        const payLoad = {
-                            "method": "play",
-                            "clientId": clientId,
-                            "gameId": gameId,
-                            "cellsId": b.tag,
-                            "colour" : playerColour
+                        if (divTurn.textContent === "It's your turn!") {
+                            const payLoad = {
+                                "method": "play",
+                                "clientId": clientId,
+                                "gameId": gameId,
+                                "cellsId": b.tag,
+                                "color": playerColour
+                            }
+                            ws.send(JSON.stringify(payLoad));
+                            
                         }
-                        ws.send(JSON.stringify(payLoad))
-                    })
+                    });
                     divBoard.appendChild(b);
                 }
+
+            // Update the turn display
+            const currentPlayerId = game.clients[game.currentTurn].clientId;
+            if (currentPlayerId === clientId) {
+                divTurn.textContent = "It's your turn! Move your monster.";
+                enableBoard(true);
+            } else {
+                divTurn.textContent = "It's " + currentPlayerId + "'s turn.";
+                enableBoard(false);
+                }
+            }
+        };
+
+            // Enable or disable the game board
+            function enableBoard(enable) {
+            const buttons = divBoard.getElementsByTagName("button");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = !enable;
             }
         }
     </script>
